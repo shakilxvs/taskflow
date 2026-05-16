@@ -47,9 +47,14 @@ export function AppProvider({ children }) {
   const refreshTasks = useCallback(async () => {
     if (!user || !selectedBusiness) return;
     setLoadingTasks(true);
-    const list = await getTasksByBusiness(user.uid, selectedBusiness.id);
-    setTasks(list);
-    setLoadingTasks(false);
+    try {
+      const list = await getTasksByBusiness(user.uid, selectedBusiness.id);
+      setTasks(list);
+    } catch (err) {
+      console.error("Failed to load tasks:", err);
+    } finally {
+      setLoadingTasks(false);
+    }
   }, [user, selectedBusiness]);
 
   useEffect(() => {
