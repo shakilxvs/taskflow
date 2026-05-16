@@ -140,8 +140,9 @@ function SidebarContent({ onClose }) {
     setSelectedBusiness,
     loadingBusinesses,
     refreshBusinesses,
+    addBusinessOpen,
+    setAddBusinessOpen,
   } = useApp();
-  const [addOpen, setAddOpen] = useState(false);
   const router = useRouter();
 
   function selectBusiness(biz) {
@@ -175,7 +176,7 @@ function SidebarContent({ onClose }) {
             Businesses
           </span>
           <button
-            onClick={() => setAddOpen(true)}
+            onClick={() => setAddBusinessOpen(true)}
             className="w-6 h-6 flex items-center justify-center rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-400 hover:text-violet-600 transition-colors"
             aria-label="Add business"
           >
@@ -242,8 +243,8 @@ function SidebarContent({ onClose }) {
       </div>
 
       <AddBusinessModal
-        open={addOpen}
-        onClose={() => setAddOpen(false)}
+        open={addBusinessOpen}
+        onClose={() => setAddBusinessOpen(false)}
         onAdded={refreshBusinesses}
       />
     </div>
