@@ -5,7 +5,7 @@ import { Building2, Plus } from "lucide-react";
 import { useApp } from "@/context/AppContext";
 
 export default function EmptyBusinessState() {
-  const { setSidebarOpen } = useApp();
+  const { setSidebarOpen, setAddBusinessOpen } = useApp();
 
   return (
     <motion.div
@@ -24,7 +24,7 @@ export default function EmptyBusinessState() {
         Add a business from the sidebar to start managing tasks and calendars.
       </p>
       <button
-        onClick={() => setSidebarOpen(true)}
+        onClick={() => { setAddBusinessOpen(true); setSidebarOpen(true); }}
         className="btn-primary flex items-center gap-2"
       >
         <Plus size={16} />
