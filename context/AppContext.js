@@ -21,6 +21,7 @@ export function AppProvider({ children }) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [loadingBusinesses, setLoadingBusinesses] = useState(false);
   const [loadingTasks, setLoadingTasks] = useState(false);
+  const [addBusinessOpen, setAddBusinessOpen] = useState(false);
 
   // Load businesses when user logs in
   useEffect(() => {
@@ -67,7 +68,13 @@ export function AppProvider({ children }) {
 
   function refreshBusinesses() {
     if (!user) return;
-    getBusinesses(user.uid).then(setBusinesses);
+    getBusinesses(user.uid)
+      .then((list) => {
+        setBusinesses(list);
+      })
+      .catch((err) => {
+        console.error("Failed to refresh businesses:", err);
+      });
   }
 
   const tasksForDate = selectedDate
@@ -93,6 +100,8 @@ export function AppProvider({ children }) {
         closePanel,
         refreshTasks,
         refreshBusinesses,
+        addBusinessOpen,
+        setAddBusinessOpen,
       }}
     >
       {children}
