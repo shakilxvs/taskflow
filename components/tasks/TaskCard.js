@@ -5,7 +5,7 @@ import { motion } from "framer-motion";
 import { Clock, Trash2, Pencil, CheckCircle2, Circle, AlertCircle } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import { useApp } from "@/context/AppContext";
-import { markTaskDone, deleteTask, updateTask } from "@/lib/firestore";
+import { markTaskDone, markTaskUndone, deleteTask, updateTask } from "@/lib/firestore";
 import { sendTaskDoneEmail } from "@/lib/emailjs";
 import TagBadge from "@/components/ui/TagBadge";
 import ConfirmDialog from "@/components/ui/ConfirmDialog";
@@ -21,22 +21,27 @@ export default function TaskCard({ task, onEdit, onToast }) {
   const isDelayed = task.status === "delayed";
 
   async function handleCheck() {
-    if (isDone) return;
     setChecking(true);
     try {
-      await markTaskDone(task.id);
-      // Send email
-      try {
-        await sendTaskDoneEmail({
-          task,
-          business: selectedBusiness,
-          completedBy: profile?.fullName || user?.displayName || user?.email || "Team member",
-        });
-      } catch (emailErr) {
-        console.warn("Email failed:", emailErr);
+      if (isDone) {
+        await markTaskUndone(task.id);
+        await refreshTasks();
+        onToast?.("Task unmarked", "success");
+      } else {
+        await markTaskDone(task.id);
+        // Send email notification
+        try {
+          await sendTaskDoneEmail({
+            task,
+            business: selectedBusiness,
+            completedBy: profile?.fullName || user?.displayName || user?.email || "Team member",
+          });
+        } catch (emailErr) {
+          console.warn("Email failed:", emailErr);
+        }
+        await refreshTasks();
+        onToast?.("Task marked as done", "success");
       }
-      await refreshTasks();
-      onToast?.("Task marked as done", "success");
     } catch {
       onToast?.("Failed to update task", "error");
     } finally {
@@ -84,9 +89,9 @@ export default function TaskCard({ task, onEdit, onToast }) {
           {/* Checkbox */}
           <button
             onClick={handleCheck}
-            disabled={isDone || checking}
+            disabled={checking}
             className="mt-0.5 shrink-0 transition-transform active:scale-90 disabled:cursor-default"
-            aria-label={isDone ? "Done" : "Mark as done"}
+            aria-label={isDone ? "Click to unmark" : "Mark as done"}
           >
             <motion.div
               animate={{ scale: checking ? 0.85 : 1 }}
