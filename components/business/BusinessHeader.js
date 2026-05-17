@@ -1,8 +1,9 @@
 "use client";
 
 import { useState, useMemo } from "react";
-import { Settings2, CheckCircle2, Clock, AlertCircle } from "lucide-react";
+import { Settings2, CheckCircle2, Clock, AlertCircle, Globe } from "lucide-react";
 import { useApp } from "@/context/AppContext";
+import { getTimezoneDisplay } from "@/lib/constants";
 import BusinessSettingsModal from "./BusinessSettingsModal";
 
 function StatChip({ icon: Icon, label, count, colorClass }) {
@@ -27,9 +28,13 @@ export default function BusinessHeader() {
 
   if (!selectedBusiness) return null;
 
+  const tzLabel = selectedBusiness.timezone
+    ? getTimezoneDisplay(selectedBusiness.timezone)
+    : null;
+
   return (
     <>
-      <div className="flex items-start justify-between mb-6">
+      <div className="flex items-start justify-between mb-4">
         <div className="flex items-center gap-3 min-w-0">
           <div
             className="w-10 h-10 rounded-2xl shrink-0 shadow-sm"
@@ -39,9 +44,17 @@ export default function BusinessHeader() {
             <h1 className="text-xl font-bold text-slate-900 dark:text-white truncate leading-tight">
               {selectedBusiness.name}
             </h1>
-            <p className="text-xs text-slate-400 dark:text-slate-500 mt-0.5">
-              {tasks.length} task{tasks.length !== 1 ? "s" : ""} total
-            </p>
+            <div className="flex items-center gap-2 mt-0.5 flex-wrap">
+              <p className="text-xs text-slate-400 dark:text-slate-500">
+                {tasks.length} task{tasks.length !== 1 ? "s" : ""} total
+              </p>
+              {tzLabel && (
+                <span className="flex items-center gap-1 text-[10px] font-semibold text-violet-600 dark:text-violet-400 bg-violet-50 dark:bg-violet-950 px-2 py-0.5 rounded-full">
+                  <Globe size={9} />
+                  {tzLabel}
+                </span>
+              )}
+            </div>
           </div>
         </div>
 
@@ -56,7 +69,7 @@ export default function BusinessHeader() {
 
       {/* Stats row */}
       {tasks.length > 0 && (
-        <div className="flex gap-2 flex-wrap mb-6">
+        <div className="flex gap-2 flex-wrap mb-4">
           {stats.pending > 0 && (
             <StatChip
               icon={Clock}
