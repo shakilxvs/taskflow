@@ -25,40 +25,45 @@ export default function Modal({ open, onClose, title, children, maxWidth = "max-
     <AnimatePresence>
       {open && (
         <>
-          {/* Backdrop */}
+          {/* Backdrop — z-[200] so it's above everything including sidebar */}
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.2 }}
             onClick={onClose}
-            className="fixed inset-0 z-40 bg-black/40 dark:bg-black/60 backdrop-blur-sm"
+            className="fixed inset-0 z-[200] bg-black/50 dark:bg-black/70 backdrop-blur-sm"
           />
 
-          {/* Dialog */}
-          <motion.div
-            initial={{ opacity: 0, scale: 0.95, y: 16 }}
-            animate={{ opacity: 1, scale: 1, y: 0 }}
-            exit={{ opacity: 0, scale: 0.95, y: 8 }}
-            transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] }}
-            className={`fixed inset-x-4 top-1/2 -translate-y-1/2 z-50 mx-auto ${maxWidth} card p-6 shadow-panel`}
-          >
-            {/* Header */}
-            <div className="flex items-center justify-between mb-5">
-              <h2 className="text-base font-semibold text-slate-900 dark:text-white">
-                {title}
-              </h2>
-              <button
-                onClick={onClose}
-                className="btn-ghost p-1.5"
-                aria-label="Close"
+          {/* Scroll container — centers dialog and scrolls if needed */}
+          <div className="fixed inset-0 z-[201] overflow-y-auto">
+            <div className="flex min-h-full items-center justify-center p-4">
+              <motion.div
+                initial={{ opacity: 0, scale: 0.95, y: 12 }}
+                animate={{ opacity: 1, scale: 1, y: 0 }}
+                exit={{ opacity: 0, scale: 0.95, y: 8 }}
+                transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] }}
+                className={`relative w-full ${maxWidth} card p-6 shadow-panel my-8`}
+                onClick={(e) => e.stopPropagation()}
               >
-                <X size={18} />
-              </button>
-            </div>
+                {/* Header */}
+                <div className="flex items-center justify-between mb-5">
+                  <h2 className="text-base font-semibold text-slate-900 dark:text-white">
+                    {title}
+                  </h2>
+                  <button
+                    onClick={onClose}
+                    className="btn-ghost p-1.5"
+                    aria-label="Close"
+                  >
+                    <X size={18} />
+                  </button>
+                </div>
 
-            {children}
-          </motion.div>
+                {children}
+              </motion.div>
+            </div>
+          </div>
         </>
       )}
     </AnimatePresence>
