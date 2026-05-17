@@ -18,6 +18,17 @@ export const metadata = {
 export default function RootLayout({ children }) {
   return (
     <html lang="en" suppressHydrationWarning>
+      <head>
+        {/*
+          Apply dark mode class synchronously before React hydrates —
+          prevents the flash of wrong theme on page load.
+        */}
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `try{if(localStorage.getItem('taskflow-dark')==='true'){document.documentElement.classList.add('dark')}}catch(e){}`,
+          }}
+        />
+      </head>
       <body className={`${inter.variable} font-sans antialiased`}>
         <DarkModeProvider>
           <AuthProvider>
