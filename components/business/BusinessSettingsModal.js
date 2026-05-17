@@ -3,17 +3,20 @@
 import { useState, useEffect } from "react";
 import { Loader2, Trash2, Check } from "lucide-react";
 import { useApp } from "@/context/AppContext";
-import { updateBusiness, deleteBusiness } from "@/lib/firestore";
-import { BUSINESS_COLORS } from "@/lib/constants";
+import { useAuth } from "@/context/AuthContext";
+import { updateBusiness, deleteBusiness, deleteTasksByBusiness } from "@/lib/firestore";
+import { BUSINESS_COLORS, TIMEZONES } from "@/lib/constants";
 import Modal from "@/components/ui/Modal";
 import ConfirmDialog from "@/components/ui/ConfirmDialog";
 
 export default function BusinessSettingsModal({ open, onClose }) {
   const { selectedBusiness, setSelectedBusiness, businesses, refreshBusinesses } = useApp();
+  const { user } = useAuth();
 
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [color, setColor] = useState(BUSINESS_COLORS[0]);
+  const [timezone, setTimezone] = useState("");
   const [busy, setBusy] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [deleteBusy, setDeleteBusy] = useState(false);
@@ -24,6 +27,7 @@ export default function BusinessSettingsModal({ open, onClose }) {
       setName(selectedBusiness.name || "");
       setEmail(selectedBusiness.notificationEmail || "");
       setColor(selectedBusiness.color || BUSINESS_COLORS[0]);
+      setTimezone(selectedBusiness.timezone || "");
     }
   }, [selectedBusiness, open]);
 
@@ -37,14 +41,15 @@ export default function BusinessSettingsModal({ open, onClose }) {
         name: name.trim(),
         notificationEmail: email.trim(),
         color,
+        timezone,
       });
       await refreshBusinesses();
-      // Update selectedBusiness locally
       setSelectedBusiness((prev) => ({
         ...prev,
         name: name.trim(),
         notificationEmail: email.trim(),
         color,
+        timezone,
       }));
       onClose();
     } catch {
@@ -58,9 +63,9 @@ export default function BusinessSettingsModal({ open, onClose }) {
     if (!selectedBusiness) return;
     setDeleteBusy(true);
     try {
+      await deleteTasksByBusiness(user.uid, selectedBusiness.id);
       await deleteBusiness(selectedBusiness.id);
       await refreshBusinesses();
-      // Select another business or null
       const remaining = businesses.filter((b) => b.id !== selectedBusiness.id);
       setSelectedBusiness(remaining[0] || null);
       setDeleteOpen(false);
@@ -74,7 +79,7 @@ export default function BusinessSettingsModal({ open, onClose }) {
 
   return (
     <>
-      <Modal open={open} onClose={onClose} title="Business Settings">
+      <Modal open={open} onClose={onClose} title="Business Settings" maxWidth="max-w-lg">
         <form onSubmit={handleSave} className="space-y-4">
           <div>
             <label className="label">Business Name</label>
@@ -97,6 +102,26 @@ export default function BusinessSettingsModal({ open, onClose }) {
             />
             <p className="text-xs text-slate-400 mt-1">
               Completed task emails go here.
+            </p>
+          </div>
+
+          {/* Timezone */}
+          <div>
+            <label className="label">Business Timezone</label>
+            <select
+              className="input"
+              value={timezone}
+              onChange={(e) => setTimezone(e.target.value)}
+            >
+              <option value="">— Not set —</option>
+              {TIMEZONES.map((tz) => (
+                <option key={tz.value} value={tz.value}>
+                  {tz.label}
+                </option>
+              ))}
+            </select>
+            <p className="text-xs text-slate-400 mt-1">
+              Shown on the calendar so you know which timezone your client works in.
             </p>
           </div>
 
@@ -158,7 +183,7 @@ export default function BusinessSettingsModal({ open, onClose }) {
         onConfirm={handleDelete}
         busy={deleteBusy}
         title="Delete Business"
-        message={`Are you sure you want to delete "${selectedBusiness?.name}"? All its tasks will remain in Firestore but won't be visible.`}
+        message={`Are you sure you want to delete "${selectedBusiness?.name}"? This will permanently delete the business and all its tasks.`}
         confirmLabel="Delete"
         danger
       />
