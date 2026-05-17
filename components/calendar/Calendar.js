@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useMemo } from "react";
-import { motion } from "framer-motion";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { useApp } from "@/context/AppContext";
 import {
@@ -126,11 +125,8 @@ export default function Calendar() {
           const hasDelayed = dayTasks?.some((t) => t.status === "delayed");
 
           return (
-            <motion.button
+            <button
               key={dateStr}
-              initial={{ opacity: 0, scale: 0.9 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ delay: idx * 0.005, duration: 0.15 }}
               onClick={() => selectDate(dateStr)}
               className={`
                 cal-day
@@ -147,7 +143,7 @@ export default function Calendar() {
               {isToday && dayTasks?.length > 0 && (
                 <span className="absolute bottom-0.5 left-1/2 -translate-x-1/2 w-1 h-1 rounded-full bg-white/70" />
               )}
-            </motion.button>
+            </button>
           );
         })}
       </div>
