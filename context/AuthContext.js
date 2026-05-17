@@ -10,8 +10,20 @@ import {
   updateProfile,
   EmailAuthProvider,
   reauthenticateWithCredential,
+  GoogleAuthProvider,
+  signInWithPopup,
 } from "firebase/auth";
-import { doc, setDoc, getDoc, getDocs, updateDoc, collection, query, where, serverTimestamp } from "firebase/firestore";
+import {
+  doc,
+  setDoc,
+  getDoc,
+  getDocs,
+  updateDoc,
+  collection,
+  query,
+  where,
+  serverTimestamp,
+} from "firebase/firestore";
 import { updateUserTimezone } from "@/lib/firestore";
 import { auth, db } from "@/lib/firebase";
 
@@ -26,6 +38,7 @@ export function AuthProvider({ children }) {
     const unsub = onAuthStateChanged(auth, async (firebaseUser) => {
       setUser(firebaseUser);
       if (firebaseUser) {
+        // Fetch profile — served from Firestore cache on repeat visits (fast)
         const snap = await getDoc(doc(db, "users", firebaseUser.uid));
         setProfile(snap.exists() ? snap.data() : null);
       } else {
@@ -38,12 +51,8 @@ export function AuthProvider({ children }) {
 
   async function login(emailOrUsername, password) {
     let email = emailOrUsername.trim();
-    // If it doesn't look like an email, look up the username in Firestore
     if (!email.includes("@")) {
-      const q = query(
-        collection(db, "users"),
-        where("username", "==", email)
-      );
+      const q = query(collection(db, "users"), where("username", "==", email));
       const snap = await getDocs(q);
       if (snap.empty) {
         const err = new Error("Username not found");
@@ -59,13 +68,13 @@ export function AuthProvider({ children }) {
     const provider = new GoogleAuthProvider();
     const result = await signInWithPopup(auth, provider);
     const u = result.user;
-    // Create Firestore profile if first time
     const ref = doc(db, "users", u.uid);
     const snap = await getDoc(ref);
     if (!snap.exists()) {
+      const username = (u.email || "").split("@")[0].toLowerCase().replace(/[^a-z0-9_]/g, "");
       await setDoc(ref, {
         fullName: u.displayName || "",
-        username: "",
+        username,
         email: u.email || "",
         timezone: "",
         createdAt: serverTimestamp(),
@@ -77,8 +86,6 @@ export function AuthProvider({ children }) {
   async function register(email, password, fullName) {
     const cred = await createUserWithEmailAndPassword(auth, email, password);
     await updateProfile(cred.user, { displayName: fullName });
-    // Derive a default username from the email (before the @)
-    // e.g. shakil@gmail.com → "shakil"
     const username = email.split("@")[0].toLowerCase().replace(/[^a-z0-9_]/g, "");
     await setDoc(doc(db, "users", cred.user.uid), {
       uid: cred.user.uid,
