@@ -12,6 +12,7 @@ import {
   reauthenticateWithCredential,
 } from "firebase/auth";
 import { doc, setDoc, getDoc, updateDoc, serverTimestamp } from "firebase/firestore";
+import { updateUserTimezone } from "@/lib/firestore";
 import { auth, db } from "@/lib/firebase";
 
 const AuthContext = createContext(null);
@@ -71,9 +72,15 @@ export function AuthProvider({ children }) {
     await updatePassword(user, newPassword);
   }
 
+  async function updateTimezone(timezone) {
+    if (!user) return;
+    await updateUserTimezone(user.uid, timezone);
+    setProfile((p) => ({ ...p, timezone }));
+  }
+
   return (
     <AuthContext.Provider
-      value={{ user, profile, loading, login, register, logout, updateFullName, changePassword }}
+      value={{ user, profile, loading, login, register, logout, updateFullName, changePassword, updateTimezone }}
     >
       {children}
     </AuthContext.Provider>
