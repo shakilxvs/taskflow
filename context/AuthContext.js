@@ -1,5 +1,4 @@
 "use client";
-
 import { createContext, useContext, useEffect, useState } from "react";
 import {
   onAuthStateChanged,
@@ -35,18 +34,33 @@ export function AuthProvider({ children }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    // ── Timeout fallback: if Firebase doesn't respond in 8s, stop spinning ──
+    const timeout = setTimeout(() => {
+      console.warn("Firebase auth timed out — check your connection or region.");
+      setLoading(false);
+    }, 8000);
+
     const unsub = onAuthStateChanged(auth, async (firebaseUser) => {
+      clearTimeout(timeout); // Firebase responded — cancel the timeout
       setUser(firebaseUser);
       if (firebaseUser) {
-        // Fetch profile — served from Firestore cache on repeat visits (fast)
-        const snap = await getDoc(doc(db, "users", firebaseUser.uid));
-        setProfile(snap.exists() ? snap.data() : null);
+        try {
+          const snap = await getDoc(doc(db, "users", firebaseUser.uid));
+          setProfile(snap.exists() ? snap.data() : null);
+        } catch (err) {
+          console.error("Failed to load user profile:", err);
+          setProfile(null);
+        }
       } else {
         setProfile(null);
       }
       setLoading(false);
     });
-    return unsub;
+
+    return () => {
+      unsub();
+      clearTimeout(timeout);
+    };
   }, []);
 
   async function login(emailOrUsername, password) {
